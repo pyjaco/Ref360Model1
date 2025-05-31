@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reference 360 Model Wizard - Define Model via Spreadsheet</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="file"] { display: block; margin-bottom: 20px; }
+        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+        .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .warning-message { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .instructions { background-color: #e9ecef; padding: 15px; border-radius: 4px; margin-bottom:20px; }
+        .instructions ul { padding-left: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Define Model via Spreadsheet</h1>
+        <p>Upload an Excel spreadsheet (.xls or .xlsx) that defines your data model.</p>
+
+        <div class="instructions">
+            <strong>Spreadsheet Format Instructions:</strong>
+            <ul>
+                <li>Each sheet in the Excel file will be treated as an Entity. The sheet name will be used as the Entity Name.</li>
+                <li>Each sheet must have exactly two columns in the first row (headers):
+                    <ul>
+                        <li><strong>Attribute Name</strong>: The name of the attribute/column in the entity.</li>
+                        <li><strong>Data Type</strong>: The data type of the attribute (e.g., String, Integer, Double, Boolean, Date).</li>
+                    </ul>
+                </li>
+                <li>Subsequent rows in each sheet should list the attribute names and their corresponding data types.</li>
+            </ul>
+             <p>Example for a sheet named "Products":</p>
+             <pre>
+Attribute Name | Data Type
+---------------|-----------
+ProductID      | Integer
+ProductName    | String
+UnitPrice      | Double
+             </pre>
+        </div>
+
+        <div th:if="${errorMessage}" class="message error-message" th:text="${errorMessage}"></div>
+        <div th:if="${warningMessage}" class="message warning-message" th:text="${warningMessage}"></div>
+
+        <form th:action="@{/wizard/process-definition-upload}" method="post" enctype="multipart/form-data">
+            <div>
+                <label for="file">Select Spreadsheet File:</label>
+                <input type="file" id="file" name="file" required="required" accept=".xls,.xlsx"/>
+            </div>
+            <div>
+                <button type="submit">Upload and Review Model</button>
+            </div>
+        </form>
+        <hr style="margin-top: 20px; margin-bottom: 20px;">
+        <p>Or, <a th:href="@{/wizard/start}">Suggest Model from Folder Contents (Module 1)</a></p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reference 360 Model Wizard - Step 1</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; }
+        input[type="text"] { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #0056b3; }
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+        .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info-message { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning-message { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step 1: Specify Data Folder</h1>
+        <p>Enter the full path to the folder on the server that contains your CSV and Excel files.</p>
+
+        <div th:if="${errorMessage}" class="message error-message" th:text="${errorMessage}"></div>
+        <div th:if="${infoMessage}" class="message info-message" th:text="${infoMessage}"></div>
+        <div th:if="${warningMessage}" class="message warning-message" th:text="${warningMessage}"></div>
+
+        <form th:action="@{/wizard/process-folder}" method="post">
+            <div>
+                <label for="folderPath">Folder Path:</label>
+                <input type="text" id="folderPath" name="folderPath" required="required" placeholder="e.g., /path/to/your/data_files or C:/data_files"/>
+                <!-- For testing with sample data: use target path like 'src/test/resources/sample_data' -->
+            </div>
+            <div>
+                <button type="submit">Suggest Model</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

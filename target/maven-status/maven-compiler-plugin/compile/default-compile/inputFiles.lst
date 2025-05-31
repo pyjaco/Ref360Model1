@@ -1,0 +1,15 @@
+/app/src/main/java/com/example/ref360automation/fileutils/FileParsingServiceImpl.java
+/app/src/main/java/com/example/ref360automation/service/R360ApiServiceImpl.java
+/app/src/main/java/com/example/ref360automation/service/ModelDefinitionParserService.java
+/app/src/main/java/com/example/ref360automation/controller/ui/WizardController.java
+/app/src/main/java/com/example/ref360automation/controller/FileProcessingController.java
+/app/src/main/java/com/example/ref360automation/model/RawDataContainer.java
+/app/src/main/java/com/example/ref360automation/fileutils/FileParsingService.java
+/app/src/main/java/com/example/ref360automation/model/Entity.java
+/app/src/main/java/com/example/ref360automation/service/R360ApiService.java
+/app/src/main/java/com/example/ref360automation/service/ModelSuggestionService.java
+/app/src/main/java/com/example/ref360automation/Ref360automationApplication.java
+/app/src/main/java/com/example/ref360automation/service/ModelSuggestionServiceImpl.java
+/app/src/main/java/com/example/ref360automation/service/ModelDefinitionParserServiceImpl.java
+/app/src/main/java/com/example/ref360automation/model/ReferenceModel.java
+/app/src/main/java/com/example/ref360automation/config/R360ApiConfig.java

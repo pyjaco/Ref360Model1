@@ -21,9 +21,9 @@ public class ModelSuggestionServiceImpl implements ModelSuggestionService {
     private static final Logger logger = LoggerFactory.getLogger(ModelSuggestionServiceImpl.class);
     private static final int MAX_ROWS_FOR_TYPE_DETECTION = 100; // Sample size for type detection
 
-    // Basic regex patterns for type detection
-    private static final Pattern INTEGER_PATTERN = Pattern.compile("^-?\d+$");
-    private static final Pattern DOUBLE_PATTERN = Pattern.compile("^-?\d*\.?\d+([eE][-+]?\d+)?$");
+    // Basic regex patterns for type detection - CORRECTED
+    private static final Pattern INTEGER_PATTERN = Pattern.compile("^-?\\d+$");
+    private static final Pattern DOUBLE_PATTERN = Pattern.compile("^-?\\d*\\.?\\d+([eE][-+]?\\d+)?$");
     private static final Pattern BOOLEAN_PATTERN = Pattern.compile("^(true|false|yes|no|0|1|t|f|y|n)$", Pattern.CASE_INSENSITIVE);
     // Add more date patterns as needed
     private static final String[] DATE_PATTERNS = {
@@ -39,7 +39,6 @@ public class ModelSuggestionServiceImpl implements ModelSuggestionService {
             return null; // Or return an empty model
         }
 
-        // For simplicity, the overall model name could be fixed or derived
         ReferenceModel suggestedModel = new ReferenceModel("SuggestedDataModel");
         List<Entity> entities = new ArrayList<>();
 
@@ -60,7 +59,6 @@ public class ModelSuggestionServiceImpl implements ModelSuggestionService {
 
     private Entity suggestEntity(RawDataContainer dataContainer) {
         String rawSourceName = dataContainer.getSourceName();
-        // Attempt to clean up source name for entity name
         String entityName = cleanSourceName(rawSourceName);
         Entity entity = new Entity(entityName);
         logger.info("Suggesting entity: {} from source: {}", entityName, rawSourceName);
@@ -80,7 +78,6 @@ public class ModelSuggestionServiceImpl implements ModelSuggestionService {
             Map<String, String> attribute = new HashMap<>();
             attribute.put("name", attributeName);
             attribute.put("type", attributeType);
-            // Could add more metadata here, e.g., "isNullable", "maxLength"
             attributes.add(attribute);
         }
         entity.setAttributes(attributes);
@@ -90,17 +87,16 @@ public class ModelSuggestionServiceImpl implements ModelSuggestionService {
 
     private String cleanSourceName(String rawName) {
         // Remove extensions like .csv, .xlsx, .xls
-        String name = rawName.replaceAll("\.(csv|xlsx|xls)$", "");
-        // Replace underscores or hyphens with spaces, then capitalize
-        name = name.replaceAll("[_\-]", " ");
-        // Remove "excel_data" if it's a remnant from our workaround
+        // This regex uses \. which is correct for String.replaceAll's regex input
+        String name = rawName.replaceAll("(?i)\\.(csv|xlsx|xls)$", "");
+        // This regex uses \- which is correct for String.replaceAll's regex input
+        name = name.replaceAll("[_\\-]", " ");
         name = name.replaceAll("excel data", "");
-        // Basic plural to singular (very naive)
-        if (name.endsWith("s") && !name.endsWith("ss")) { // Avoid changing "address" to "addres"
+        if (name.endsWith("s") && !name.endsWith("ss")) {
             name = name.substring(0, name.length() -1);
         }
-        // Capitalize first letter of each word
-        String[] parts = name.trim().split("\s+");
+        // This regex uses \s which is correct for String.split()'s regex input
+        String[] parts = name.trim().split("\\s+");
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             if (part.length() > 0) {
@@ -112,18 +108,19 @@ public class ModelSuggestionServiceImpl implements ModelSuggestionService {
     }
 
     private String cleanAttributeName(String rawHeader) {
-        // Replace spaces, special characters (except underscore) with underscore, or camelCase
-        // For now, just trim and ensure it's a valid Java-like identifier (simple version)
-        String cleaned = rawHeader.trim().replaceAll("\s+", "_").replaceAll("[^a-zA-Z0-9_]", "");
+        // CORRECTED regex for \s+
+        String cleaned = rawHeader.trim().replaceAll("\\s+", "_"); // Replace whitespace with underscore
+        cleaned = cleaned.replaceAll("[-@]", "_"); // Replace hyphen and @ with underscore
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9_]", ""); // Remove any remaining non-alphanumeric (except underscore)
         if (cleaned.isEmpty() || Character.isDigit(cleaned.charAt(0))) {
-            cleaned = "attr_" + cleaned; // Ensure it doesn't start with a digit or is empty
+            cleaned = "attr_" + cleaned;
         }
         return cleaned;
     }
 
     private String detectColumnType(String header, List<Map<String, String>> dataRows) {
         if (dataRows == null || dataRows.isEmpty()) {
-            return "String"; // Default if no data to inspect
+            return "String";
         }
 
         boolean allInteger = true;
@@ -137,7 +134,7 @@ public class ModelSuggestionServiceImpl implements ModelSuggestionService {
             String value = row.get(header);
 
             if (value == null || value.trim().isEmpty()) {
-                continue; // Skip empty values for type detection, consider them nullable
+                continue;
             }
 
             value = value.trim();
@@ -155,23 +152,21 @@ public class ModelSuggestionServiceImpl implements ModelSuggestionService {
                 allDate = false;
             }
 
-            // If none of the types match, it's likely a String, no need to check further for this column
             if (!allInteger && !allDouble && !allBoolean && !allDate) break;
         }
 
         if (allInteger) return "Integer";
-        if (allDouble) return "Double"; // Or "Numeric", "Decimal"
+        if (allDouble) return "Double";
         if (allBoolean) return "Boolean";
-        if (allDate) return "Date"; // Or "Timestamp" if time components are common
+        if (allDate) return "Date";
 
-        return "String"; // Default type
+        return "String";
     }
 
     private boolean isDate(String value) {
         if (value == null) return false;
         for (String pattern : DATE_PATTERNS) {
             try {
-                // Attempt to parse with strictness (SimpleDateFormat is not ideal for validation but okay for suggestion)
                 SimpleDateFormat sdf = new SimpleDateFormat(pattern);
                 sdf.setLenient(false);
                 sdf.parse(value);

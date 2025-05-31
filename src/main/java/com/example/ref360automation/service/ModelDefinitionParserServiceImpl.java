@@ -136,8 +136,8 @@ public class ModelDefinitionParserServiceImpl implements ModelDefinitionParserSe
 
     private String cleanEntityName(String rawName) {
         // Similar to ModelSuggestionServiceImpl's cleaning, but perhaps simpler
-        String name = rawName.replaceAll("[_\-]", " ");
-        String[] parts = name.trim().split("\s+");
+        String name = rawName.replaceAll("[_\\-]", " ");
+        String[] parts = name.trim().split("\\s+");
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             if (part.length() > 0) {

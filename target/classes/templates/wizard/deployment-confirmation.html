@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reference 360 Model Wizard - Confirmation</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #0056b3; }
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+        .success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Deployment Selection Confirmed</h1>
+
+        <div th:if="${successMessage}" class="message success-message" th:text="${successMessage}"></div>
+
+        <p>The selected entities are now ready for the next step: deployment via API (this part is not yet implemented).</p>
+        <p><a th:href="@{/wizard/start}">Start a new Model</a></p>
+        <!-- In a real scenario, you might show the details of what was selected or a link to a status page -->
+    </div>
+</body>
+</html>

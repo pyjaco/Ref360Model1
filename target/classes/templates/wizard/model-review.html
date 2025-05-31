@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Reference 360 Model Wizard - Step 2: Review Model</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #007bff; color: white; }
+        tr:nth-child(even) { background-color: #f2f2f2; }
+        .entity-card { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 4px; }
+        .attribute-list { list-style-type: none; padding-left: 0; }
+        .attribute-list li { background-color: #e9ecef; margin-bottom: 5px; padding: 5px; border-radius: 3px; }
+        button { background-color: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top:10px;}
+        button:hover { background-color: #1e7e34; }
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; }
+        .warning-message { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+         .action-bar { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Step 2: Review Suggested Model</h1>
+        <p>Review the model suggested based on your files. Select the entities you wish to deploy.</p>
+
+        <div th:if="${warningMessage}" class="message warning-message" th:text="${warningMessage}"></div>
+
+        <form th:action="@{/wizard/submit-selection}" method="post" th:object="${suggestedModel}">
+            <h2 th:text="*{modelName}">Model Name</h2>
+            <div th:if="*{entities == null or entities.empty}">
+                <p>No entities were suggested for this model.</p>
+            </div>
+
+            <div th:each="entity, iterStat : *{entities}" class="entity-card">
+                <h3>
+                    <input type="checkbox" th:id="'entityCheckbox_' + ${iterStat.index}" name="selectedEntities" th:value="${entity.name}" checked="checked" />
+                    <label th:for="'entityCheckbox_' + ${iterStat.index}" th:text="${entity.name}">Entity Name</label>
+                </h3>
+                <p th:if="${entity.attributes == null or entity.attributes.empty}">No attributes suggested for this entity.</p>
+                <table th:unless="${entity.attributes == null or entity.attributes.empty}">
+                    <thead>
+                        <tr>
+                            <th>Attribute Name</th>
+                            <th>Suggested Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="attr : ${entity.attributes}">
+                            <td th:text="${attr.name}">Attribute Name</td>
+                            <td th:text="${attr.type}">Attribute Type</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="action-bar" th:unless="*{entities == null or entities.empty}">
+                <button type="submit">Submit Selected Entities for Deployment</button>
+            </div>
+        </form>
+        <a th:href="@{/wizard/start}">Back to Folder Selection</a>
+    </div>
+</body>
+</html>

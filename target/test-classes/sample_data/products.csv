@@ -1,0 +1,4 @@
+ProductID,ProductName,SupplierID,CategoryID,QuantityPerUnit,UnitPrice,UnitsInStock
+1,Chai,1,1,10 boxes x 20 bags,18,39
+2,Chang,1,1,24 - 12 oz bottles,19,17
+3,Aniseed Syrup,1,2,12 - 550 ml bottles,10,13
