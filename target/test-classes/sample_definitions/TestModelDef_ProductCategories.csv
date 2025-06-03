@@ -1,0 +1,4 @@
+Attribute Name,Data Type,Is Mandatory
+CategoryID,String,true
+CategoryName,String,true
+Description,String,false

@@ -1,2 +1,4 @@
-com/example/ref360automation/fileutils/FileParsingServiceImplTest.class
 com/example/ref360automation/service/ModelSuggestionServiceImplTest.class
+com/example/ref360automation/prototype/NerPrototype.class
+com/example/ref360automation/fileutils/FileParsingServiceImplTest.class
+com/example/ref360automation/service/ModelDefinitionParserServiceImplTest.class

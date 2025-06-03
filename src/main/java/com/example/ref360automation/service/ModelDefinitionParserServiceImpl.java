@@ -1,7 +1,6 @@
 package com.example.ref360automation.service;
 
-import com.example.ref360automation.model.Entity;
-import com.example.ref360automation.model.ReferenceModel;
+import com.example.ref360automation.r360.model.*; // Import new R360 POJOs
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -13,36 +12,47 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.HashMap; // Added import
 import java.util.List;
-import java.util.Map;
+import java.util.Map; // Added import
+import java.util.stream.Collectors;
 
 @Service
 public class ModelDefinitionParserServiceImpl implements ModelDefinitionParserService {
 
     private static final Logger logger = LoggerFactory.getLogger(ModelDefinitionParserServiceImpl.class);
 
-    // Define expected column headers for clarity and validation
     private static final String ATTRIBUTE_NAME_HEADER = "Attribute Name";
     private static final String DATA_TYPE_HEADER = "Data Type";
+    private static final String IS_MANDATORY_HEADER = "Is Mandatory"; // Optional header
 
     @Override
-    public ReferenceModel parseModelDefinition(MultipartFile multipartFile) throws IOException, IllegalArgumentException {
+    public R360ModelImport parseModelDefinition(MultipartFile multipartFile, String defaultRdsName) throws IOException, IllegalArgumentException {
         if (multipartFile.isEmpty()) {
             throw new IllegalArgumentException("Uploaded file is empty.");
         }
 
-        String fileName = multipartFile.getOriginalFilename();
-        logger.info("Parsing model definition from spreadsheet: {}", fileName);
+        String originalFileName = multipartFile.getOriginalFilename();
+        logger.info("Parsing model definition from spreadsheet: {}", originalFileName);
 
-        ReferenceModel definedModel = new ReferenceModel("DefinedDataModel_" + removeFileExtension(fileName));
-        List<Entity> entities = new ArrayList<>();
+        R360ModelImport r360Model = new R360ModelImport();
+
+        R360ReferenceDataSet rds = new R360ReferenceDataSet();
+        String rdsName = cleanAssetName(defaultRdsName.isEmpty() ? removeFileExtension(originalFileName, "DefaultRDS") : defaultRdsName);
+        rds.setName(rdsName);
+        rds.setInternalId(generateInternalId(rdsName));
+        rds.setAlias(generateAlias(rdsName));
+        rds.setDescription("Reference Data Set defined from spreadsheet: " + originalFileName);
+        rds.setHierarchical(false); // Default, can be updated if any CL is hierarchical
+        rds.setLevels(1);
+
+        List<R360CodeValueField> rdsGlobalFields = new ArrayList<>();
 
         try (InputStream is = multipartFile.getInputStream()) {
             Workbook workbook;
-            if (fileName != null && fileName.toLowerCase().endsWith(".xlsx")) {
+            if (originalFileName != null && originalFileName.toLowerCase().endsWith(".xlsx")) {
                 workbook = new XSSFWorkbook(is);
-            } else if (fileName != null && fileName.toLowerCase().endsWith(".xls")) {
+            } else if (originalFileName != null && originalFileName.toLowerCase().endsWith(".xls")) {
                 workbook = new HSSFWorkbook(is);
             } else {
                 throw new IllegalArgumentException("Invalid file format. Please upload an Excel file (XLS or XLSX).");
@@ -50,30 +60,40 @@ public class ModelDefinitionParserServiceImpl implements ModelDefinitionParserSe
 
             for (int i = 0; i < workbook.getNumberOfSheets(); i++) {
                 Sheet sheet = workbook.getSheetAt(i);
-                String entityName = sheet.getSheetName();
-                if (entityName == null || entityName.trim().isEmpty()) {
+                String sheetName = sheet.getSheetName();
+                if (sheetName == null || sheetName.trim().isEmpty()) {
                     logger.warn("Skipping sheet with no name (index {}).", i);
                     continue;
                 }
-                entityName = cleanEntityName(entityName);
-                logger.info("Processing sheet as entity: {}", entityName);
 
-                Entity entity = new Entity(entityName);
-                List<Map<String, String>> attributes = new ArrayList<>();
+                String clName = cleanAssetName(sheetName);
+                logger.info("Processing sheet '{}' as Code List '{}'", sheetName, clName);
 
-                Row headerRow = sheet.getRow(0);
-                if (headerRow == null) {
-                    logger.warn("Skipping sheet '{}' as it has no header row.", sheet.getSheetName());
+                R360CodeList codeList = new R360CodeList();
+                codeList.setName(clName);
+                codeList.setInternalId(generateInternalId(clName));
+                codeList.setAlias(generateAlias(clName));
+                codeList.setTermId(rds.getInternalId()); // Link to parent RDS
+                codeList.setRdsName(rds.getName());
+                codeList.setDescription("Code List defined from sheet: " + sheetName);
+                codeList.setHierarchical(false); // Default, TODO: add heuristic for hierarchies from sheet structure
+
+                List<R360CodeValueField> codeValueFields = new ArrayList<>();
+                Row headerRowObj = sheet.getRow(0);
+                if (headerRowObj == null) {
+                    logger.warn("Skipping sheet '{}' as it has no header row.", sheetName);
                     continue;
                 }
 
-                // Validate header row (optional but good practice)
-                String header1 = getCellStringValue(headerRow.getCell(0)).trim();
-                String header2 = getCellStringValue(headerRow.getCell(1)).trim();
+                // Map headers to column indices
+                Map<String, Integer> headerMap = new HashMap<>();
+                for (Cell cell : headerRowObj) {
+                    headerMap.put(getCellStringValue(cell).trim(), cell.getColumnIndex());
+                }
 
-                if (!ATTRIBUTE_NAME_HEADER.equalsIgnoreCase(header1) || !DATA_TYPE_HEADER.equalsIgnoreCase(header2)) {
-                    logger.warn("Sheet '{}' has incorrect headers. Expected '{}' and '{}', but got '{}' and '{}'. Skipping.",
-                            sheet.getSheetName(), ATTRIBUTE_NAME_HEADER, DATA_TYPE_HEADER, header1, header2);
+                if (!headerMap.containsKey(ATTRIBUTE_NAME_HEADER) || !headerMap.containsKey(DATA_TYPE_HEADER)) {
+                    logger.warn("Sheet '{}' has incorrect headers. Expected '{}' and '{}'. Found: {}. Skipping.",
+                            sheetName, ATTRIBUTE_NAME_HEADER, DATA_TYPE_HEADER, headerMap.keySet());
                     continue;
                 }
 
@@ -81,52 +101,88 @@ public class ModelDefinitionParserServiceImpl implements ModelDefinitionParserSe
                     Row dataRow = sheet.getRow(j);
                     if (dataRow == null) continue;
 
-                    String attributeName = getCellStringValue(dataRow.getCell(0)).trim();
-                    String attributeType = getCellStringValue(dataRow.getCell(1)).trim();
+                    String attributeNameVal = getCellStringValue(dataRow.getCell(headerMap.get(ATTRIBUTE_NAME_HEADER))).trim();
+                    String attributeTypeVal = getCellStringValue(dataRow.getCell(headerMap.get(DATA_TYPE_HEADER))).trim();
+                    boolean isMandatoryVal = false;
+                    if (headerMap.containsKey(IS_MANDATORY_HEADER)) {
+                         String mandatoryStr = getCellStringValue(dataRow.getCell(headerMap.get(IS_MANDATORY_HEADER))).trim();
+                         isMandatoryVal = "true".equalsIgnoreCase(mandatoryStr) || "yes".equalsIgnoreCase(mandatoryStr) || "1".equals(mandatoryStr);
+                    }
 
-                    if (attributeName.isEmpty()) { // Skip if attribute name is blank
-                        logger.trace("Skipping row {} in sheet '{}' due to empty attribute name.", j + 1, sheet.getSheetName());
+
+                    if (attributeNameVal.isEmpty()) {
+                        logger.trace("Skipping row {} in sheet '{}' due to empty attribute name.", j + 1, sheetName);
                         continue;
                     }
-                    if (attributeType.isEmpty()) { // Default to String if type is blank
-                        attributeType = "String";
-                        logger.trace("Attribute type for '{}' in sheet '{}' is empty, defaulting to String.", attributeName, sheet.getSheetName());
+                    if (attributeTypeVal.isEmpty()) {
+                        attributeTypeVal = "String"; // Default if type is blank
+                        logger.trace("Attribute type for '{}' in sheet '{}' is empty, defaulting to String.", attributeNameVal, sheetName);
                     }
 
-                    Map<String, String> attribute = new HashMap<>();
-                    attribute.put("name", attributeName);
-                    attribute.put("type", attributeType);
-                    attributes.add(attribute);
+                    R360CodeValueField field = new R360CodeValueField();
+                    field.setName(cleanAttributeName(attributeNameVal));
+                    field.getLabels().add(new R360Label("en", attributeNameVal));
+                    field.setDatatype(attributeTypeVal); // Consider validating/normalizing this type
+                    field.setMandatory(isMandatoryVal);
+                    field.setOrigin("TERM");
+
+                    // TODO: Add logic for "Reference" datatype if specified in sheet
+                    // Example: if (attributeTypeVal.startsWith("Reference(")) parse relatedTermId etc.
+
+                    codeValueFields.add(field);
                 }
 
-                if (attributes.isEmpty()) {
-                    logger.warn("No attributes defined for entity '{}' from sheet '{}'.", entityName, sheet.getSheetName());
+                if (codeValueFields.isEmpty()) {
+                    logger.warn("No attributes defined for Code List '{}' from sheet '{}'.", clName, sheetName);
                 }
-                entity.setAttributes(attributes);
-                entities.add(entity);
+                codeList.setCodeValueFields(codeValueFields);
+                r360Model.getCodeLists().add(codeList);
+
+                // Aggregate fields for RDS
+                codeValueFields.forEach(cvf -> {
+                    if (rdsGlobalFields.stream().noneMatch(f -> f.getName().equals(cvf.getName()))) {
+                        R360CodeValueField rdsFieldCopy = new R360CodeValueField();
+                        rdsFieldCopy.setName(cvf.getName());
+                        rdsFieldCopy.setDatatype(cvf.getDatatype());
+                        rdsFieldCopy.setMandatory(false); // RDS fields are often not mandatory themselves at RDS level
+                        rdsFieldCopy.setOrigin(cvf.getOrigin());
+                        rdsFieldCopy.setLabels(new ArrayList<>(cvf.getLabels()));
+                        // Copy reference details if any, though this is simplified
+                        if ("Reference".equals(cvf.getDatatype())) {
+                            rdsFieldCopy.setRelatedTermId(cvf.getRelatedTermId());
+                            rdsFieldCopy.setDisplayColumns(new ArrayList<>(cvf.getDisplayColumns()));
+                        }
+                        rdsGlobalFields.add(rdsFieldCopy);
+                    }
+                });
             }
             workbook.close();
         }
-        definedModel.setEntities(entities);
-        if (entities.isEmpty()) {
-             logger.warn("No entities could be parsed from the spreadsheet {}.", fileName);
-             // Optionally throw an exception or return a model indicating no entities found
+
+        rds.setCodeValueFields(rdsGlobalFields);
+        if (!r360Model.getCodeLists().isEmpty()) {
+            rds.setDefaultList(r360Model.getCodeLists().get(0).getInternalId());
         }
-        logger.info("Successfully parsed model definition from {}. Entities found: {}", fileName, entities.size());
-        return definedModel;
+        r360Model.getReferenceDataSets().add(rds);
+
+        if (r360Model.getCodeLists().isEmpty()) {
+             logger.warn("No Code Lists could be parsed from the spreadsheet {}.", originalFileName);
+        }
+        logger.info("Successfully parsed model definition from {}. Found {} Code Lists under RDS '{}'.",
+                     originalFileName, r360Model.getCodeLists().size(), rds.getName());
+        return r360Model;
     }
 
     private String getCellStringValue(Cell cell) {
         if (cell == null) {
             return "";
         }
-        // Using DataFormatter to get cell value as String, regardless of actual cell type
         DataFormatter dataFormatter = new DataFormatter();
         return dataFormatter.formatCellValue(cell);
     }
 
-    private String removeFileExtension(String filename) {
-        if (filename == null) return "DefaultModel";
+    private String removeFileExtension(String filename, String defaultName) {
+        if (filename == null || filename.isEmpty()) return defaultName;
         int lastDot = filename.lastIndexOf('.');
         if (lastDot > 0) {
             return filename.substring(0, lastDot);
@@ -134,10 +190,13 @@ public class ModelDefinitionParserServiceImpl implements ModelDefinitionParserSe
         return filename;
     }
 
-    private String cleanEntityName(String rawName) {
-        // Similar to ModelSuggestionServiceImpl's cleaning, but perhaps simpler
-        String name = rawName.replaceAll("[_\\-]", " ");
-        String[] parts = name.trim().split("\\s+");
+    private String cleanAssetName(String rawName) { // Renamed from cleanEntityName for clarity
+        if (rawName == null || rawName.trim().isEmpty()) return "UnnamedAsset";
+        String name = rawName.replaceAll("(?i)\\.(csv|xlsx|xls)$", "");
+        name = name.replaceAll("[_\\-]", " ");
+        name = name.replaceAll("excel data", "").trim(); // Added from ModelSuggestionServiceImpl for consistency
+
+        String[] parts = name.split("\\s+"); // Uses \\s+ from ModelSuggestionServiceImpl
         StringBuilder sb = new StringBuilder();
         for (String part : parts) {
             if (part.length() > 0) {
@@ -145,6 +204,34 @@ public class ModelDefinitionParserServiceImpl implements ModelDefinitionParserSe
             }
         }
         String cleanedName = sb.toString();
-        return cleanedName.isEmpty() ? "UnnamedEntity" : cleanedName;
+        // Refined plural 's' removal from ModelSuggestionServiceImpl
+        if (cleanedName.endsWith("s") &&
+            !cleanedName.endsWith("ss") &&
+            cleanedName.length() > 2 &&
+            Character.isLowerCase(cleanedName.charAt(cleanedName.length() - 2))) {
+            cleanedName = cleanedName.substring(0, cleanedName.length() - 1);
+        }
+        return cleanedName.isEmpty() ? "UnnamedAsset" : cleanedName;
+    }
+
+    private String cleanAttributeName(String rawHeader) {
+        if (rawHeader == null || rawHeader.trim().isEmpty()) return "unnamed_attr";
+        String cleaned = rawHeader.trim().replaceAll("\\s+", "_");
+        cleaned = cleaned.replaceAll("[-@]", "_");
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9_]", "");
+        if (cleaned.isEmpty() || Character.isDigit(cleaned.charAt(0))) {
+            cleaned = "attr_" + cleaned;
+        }
+        return cleaned;
+    }
+
+    private String generateInternalId(String name) {
+        if (name == null || name.isEmpty()) return "defaultIntId";
+        return name.toLowerCase().replaceAll("\\s+", "") + "IntId";
+    }
+
+    private String generateAlias(String name) {
+        if (name == null || name.isEmpty()) return "defaultAls";
+        return name.toLowerCase().replaceAll("\\s+", "") + "Als";
     }
 }

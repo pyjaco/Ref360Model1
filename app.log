@@ -1,0 +1,33 @@
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v2.7.5)
+
+2025-06-01 03:10:43.070  INFO 29440 --- [           main] c.e.r.Ref360automationApplication        : Starting Ref360automationApplication v0.0.1-SNAPSHOT using Java 21.0.7 on devbox with PID 29440 (/app/target/ref360automation-0.0.1-SNAPSHOT.jar started by jules in /app)
+2025-06-01 03:10:43.074  INFO 29440 --- [           main] c.e.r.Ref360automationApplication        : No active profile set, falling back to 1 default profile: "default"
+2025-06-01 03:10:44.293  INFO 29440 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port(s): 8080 (http)
+2025-06-01 03:10:44.308  INFO 29440 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-06-01 03:10:44.308  INFO 29440 --- [           main] org.apache.catalina.core.StandardEngine  : Starting Servlet engine: [Apache Tomcat/9.0.68]
+2025-06-01 03:10:44.400  INFO 29440 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-06-01 03:10:44.401  INFO 29440 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1244 ms
+2025-06-01 03:10:44.491  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'date' from classpath. Trying FileInputStream from 'src/test/resources/opennlp_models/en-ner-date.bin'
+2025-06-01 03:10:44.492  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'date' from path 'src/test/resources/opennlp_models/en-ner-date.bin'. NER for this type will be skipped. Reason: src/test/resources/opennlp_models/en-ner-date.bin (No such file or directory)
+2025-06-01 03:10:44.493  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'money' from classpath. Trying FileInputStream from 'src/test/resources/opennlp_models/en-ner-money.bin'
+2025-06-01 03:10:44.493  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'money' from path 'src/test/resources/opennlp_models/en-ner-money.bin'. NER for this type will be skipped. Reason: src/test/resources/opennlp_models/en-ner-money.bin (No such file or directory)
+2025-06-01 03:10:44.493  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'percentage' from classpath. Trying FileInputStream from 'src/test/resources/opennlp_models/en-ner-percentage.bin'
+2025-06-01 03:10:44.494  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'percentage' from path 'src/test/resources/opennlp_models/en-ner-percentage.bin'. NER for this type will be skipped. Reason: src/test/resources/opennlp_models/en-ner-percentage.bin (No such file or directory)
+2025-06-01 03:10:44.494  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'location' from classpath. Trying FileInputStream from 'src/test/resources/opennlp_models/en-ner-location.bin'
+2025-06-01 03:10:44.494  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'location' from path 'src/test/resources/opennlp_models/en-ner-location.bin'. NER for this type will be skipped. Reason: src/test/resources/opennlp_models/en-ner-location.bin (No such file or directory)
+2025-06-01 03:10:44.494  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'person' from classpath. Trying FileInputStream from 'src/test/resources/opennlp_models/en-ner-person.bin'
+2025-06-01 03:10:44.494  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : Could not load NER model for type 'person' from path 'src/test/resources/opennlp_models/en-ner-person.bin'. NER for this type will be skipped. Reason: src/test/resources/opennlp_models/en-ner-person.bin (No such file or directory)
+2025-06-01 03:10:44.495  WARN 29440 --- [           main] c.e.r.s.R360TypeDetectionServiceImpl     : No OpenNLP NER models were loaded. Type detection will rely solely on regex and heuristics.
+2025-06-01 03:10:44.896  INFO 29440 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port(s): 8080 (http) with context path ''
+2025-06-01 03:10:44.911  INFO 29440 --- [           main] c.e.r.Ref360automationApplication        : Started Ref360automationApplication in 2.328 seconds (JVM running for 2.911)
+2025-06-01 03:10:57.066  INFO 29440 --- [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-06-01 03:10:57.067  INFO 29440 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-06-01 03:10:57.068  INFO 29440 --- [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-06-01 03:10:57.109  INFO 29440 --- [nio-8080-exec-1] c.e.r.c.FileProcessingController         : Received request for test defined model serialization with RDS name: SpreadsheetDefinedRDS

@@ -1,0 +1,4 @@
+Attribute Name,Data Type
+RegionCode,String
+RegionName,String
+SalesManagerID,Integer

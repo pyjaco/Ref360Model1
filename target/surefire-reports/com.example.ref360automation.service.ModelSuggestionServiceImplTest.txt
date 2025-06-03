@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.example.ref360automation.service.ModelSuggestionServiceImplTest
 -------------------------------------------------------------------------------
-Tests run: 32, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.256 s - in com.example.ref360automation.service.ModelSuggestionServiceImplTest
+Tests run: 34, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.009 s - in com.example.ref360automation.service.ModelSuggestionServiceImplTest

@@ -1,2 +1,4 @@
 /app/src/test/java/com/example/ref360automation/service/ModelSuggestionServiceImplTest.java
 /app/src/test/java/com/example/ref360automation/fileutils/FileParsingServiceImplTest.java
+/app/src/test/java/com/example/ref360automation/service/ModelDefinitionParserServiceImplTest.java
+/app/src/test/java/com/example/ref360automation/prototype/NerPrototype.java
