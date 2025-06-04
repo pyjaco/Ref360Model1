@@ -24,43 +24,56 @@
 <body>
     <div class="container">
         <h1>Step 2: Review Suggested Model</h1>
-        <p>Review the model suggested based on your files. Select the entities you wish to deploy.</p>
+        <p>Review the model suggested based on your files. Select the Code Lists you wish to deploy.</p>
 
         <div th:if="${warningMessage}" class="message warning-message" th:text="${warningMessage}"></div>
 
         <form th:action="@{/wizard/submit-selection}" method="post" th:object="${suggestedModel}">
-            <h2 th:text="*{modelName}">Model Name</h2>
-            <div th:if="*{entities == null or entities.empty}">
-                <p>No entities were suggested for this model.</p>
+            <!-- Displaying the name of the first ReferenceDataSet -->
+            <h2 th:if="*{referenceDataSets != null and not #lists.isEmpty(referenceDataSets)}"
+                th:text="*{referenceDataSets[0].name + ' (Reference Data Set)'}">Model Name</h2>
+            <h2 th:if="*{referenceDataSets == null or #lists.isEmpty(referenceDataSets)}">[Model Name Not Available]</h2>
+
+            <div th:if="*{codeLists == null or #lists.isEmpty(codeLists)}">
+                <p>No code lists were suggested for this model.</p>
             </div>
 
-            <div th:each="entity, iterStat : *{entities}" class="entity-card">
+            <div th:each="codeList, iterStat : *{codeLists}" class="entity-card">
                 <h3>
-                    <input type="checkbox" th:id="'entityCheckbox_' + ${iterStat.index}" name="selectedEntities" th:value="${entity.name}" checked="checked" />
-                    <label th:for="'entityCheckbox_' + ${iterStat.index}" th:text="${entity.name}">Entity Name</label>
+                    <!-- Assuming selectedEntities in controller will map to selected CodeList names -->
+                    <input type="checkbox" th:id="'codeListCheckbox_' + ${iterStat.index}" name="selectedEntities" th:value="${codeList.name}" checked="checked" />
+                    <label th:for="'codeListCheckbox_' + ${iterStat.index}" th:text="${codeList.name}">Code List Name</label>
+                    <span th:if="${codeList.hierarchical}" style="font-size: 0.8em; color: #6c757d;">(Hierarchical)</span>
                 </h3>
-                <p th:if="${entity.attributes == null or entity.attributes.empty}">No attributes suggested for this entity.</p>
-                <table th:unless="${entity.attributes == null or entity.attributes.empty}">
+                <p th:if="${codeList.codeValueFields == null or #lists.isEmpty(codeList.codeValueFields)}">No attributes suggested for this code list.</p>
+                <table th:unless="${codeList.codeValueFields == null or #lists.isEmpty(codeList.codeValueFields)}">
                     <thead>
                         <tr>
                             <th>Attribute Name</th>
                             <th>Suggested Type</th>
+                            <th>Mandatory</th>
+                            <th>Origin</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="attr : ${entity.attributes}">
-                            <td th:text="${attr.name}">Attribute Name</td>
-                            <td th:text="${attr.type}">Attribute Type</td>
+                        <tr th:each="attrField : ${codeList.codeValueFields}">
+                            <td th:text="${attrField.labels != null and not #lists.isEmpty(attrField.labels)} ? ${attrField.labels[0].value} : ${attrField.name}">Attribute Name</td>
+                            <td th:text="${attrField.datatype}">Suggested Type</td>
+                            <td th:text="${attrField.mandatory}">Mandatory</td>
+                            <td th:text="${attrField.origin}">Origin</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <div class="action-bar" th:unless="*{entities == null or entities.empty}">
-                <button type="submit">Submit Selected Entities for Deployment</button>
+            <div class="action-bar" th:unless="*{codeLists == null or #lists.isEmpty(codeLists)}">
+                <button type="submit">Submit Selected Code Lists for Deployment</button>
             </div>
         </form>
-        <a th:href="@{/wizard/start}">Back to Folder Selection</a>
+        <p>
+            <a th:href="@{/wizard/start}">Suggest Model from Folder (Module 1)</a> |
+            <a th:href="@{/wizard/upload-definition}">Define Model from Spreadsheet (Module 2)</a>
+        </p>
     </div>
 </body>
 </html>
